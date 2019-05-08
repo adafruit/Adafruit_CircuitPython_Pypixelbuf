@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 #
-# Based on the Adafruit NeoPixel and Adafruit Dotstar Circuitpython drivers.
+# Based on the Adafruit NeoPixel and Adafruit Dotstar CircuitPython drivers.
 # Copyright (c) 2019 Roy Hooper
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,6 +31,7 @@ This is a work in progress.
 * Author(s): Damien P. George &  Limor Fried & Scott Shawcroft & Roy Hooper
 """
 import math
+
 
 class ByteOrder(object):
     has_white = False
@@ -154,7 +155,7 @@ class PixelBuf(object):
     :param ~float brightness: Brightness (0 to 1.0, default 1.0)
     :param ~bytearray rawbuf: Bytearray to store raw pixel colors in
     :param ~int offset: Offset from start of buffer (default 0)
-    :param ~bool dotstar: Dotstar mode (default False)
+    :param ~bool dotstar: DotStar mode (default False)
     :param ~bool auto_write: Whether to automatically write pixels (Default False)
     :param ~callable write_function: (optional) Callable to use to send pixels
     :param ~list write_args: (optional) Tuple or list of args to pass to ``write_function``.  The 
@@ -169,7 +170,7 @@ class PixelBuf(object):
         if rawbuf is not None and not isinstance(rawbuf, bytearray):
             raise TypeError("rawbuf must be a bytearray")
         if dotstar and not byteorder.has_luminosity:
-            raise ValueError("Can not use dotstar with %s" % byteorder)
+            raise ValueError("Can not use DotStar with %s" % byteorder)
 
         effective_bpp = 4 if dotstar else byteorder.bpp
         _bytes = effective_bpp * n

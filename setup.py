@@ -27,7 +27,7 @@ setup(
     long_description_content_type='text/x-rst',
 
     # The project's main homepage.
-    url='https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf',
+    url='https://github.com/adafruit/Adafruit_CircuitPython_PyPixelBuf',
 
     # Author details
     author='Roy Hooper',
