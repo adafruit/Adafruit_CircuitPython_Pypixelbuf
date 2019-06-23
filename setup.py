@@ -22,7 +22,7 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
 
-    description='DotStar strip driver (for CircuitPython 4.0+ with _pixelbuf)',
+    description='Pure python implementation of _pixelbuf',
     long_description=long_description,
     long_description_content_type='text/x-rst',
 
@@ -34,7 +34,7 @@ setup(
     author_email='rhooper@toybox.ca',
 
     install_requires=[
-        'Adafruit-Blinka',
+        'Adafruit-Blinka'
     ],
 
     # Choose your license
