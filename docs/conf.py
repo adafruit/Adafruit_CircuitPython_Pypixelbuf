@@ -34,7 +34,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Adafruit DotStar4 Library'
+project = u'Adafruit Pypixelbuf Library'
 copyright = u'2019 Roy Hooper'
 author = u'Roy Hooper'
 
@@ -109,7 +109,7 @@ html_static_path = ['_static']
 html_favicon = '_static/favicon.ico'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'AdafruitPyportal4Librarydoc'
+htmlhelp_basename = 'AdafruitPypixelbufLibrarydoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -135,7 +135,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'AdafruitDotStar4Library.tex', u'AdafruitDotStar4 Library Documentation',
+    (master_doc, 'AdafruitPypixelbufLibrary.tex', u'AdafruitPypixelbuf Library Documentation',
      author, 'manual'),
 ]
 
@@ -144,7 +144,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'AdafruitDotStar4library', u'Adafruit DotStar4 Library Documentation',
+    (master_doc, 'AdafruitPypixelbuflibrary', u'Adafruit Pypixelbuf Library Documentation',
      [author], 1)
 ]
 
@@ -154,7 +154,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'AdafruitDotStar4Library', u'Adafruit DotStar4 Library Documentation',
-     author, 'AdafruitDotStar4Library', 'One line description of project.',
+    (master_doc, 'AdafruitPypixelbufLibrary', u'Adafruit Pypixelbuf Library Documentation',
+     author, 'AdafruitPypixelbufLibrary', 'One line description of project.',
      'Miscellaneous'),
 ]
