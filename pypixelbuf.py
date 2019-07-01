@@ -31,110 +31,26 @@ This is a work in progress.
 * Author(s): Damien P. George &  Limor Fried & Scott Shawcroft & Roy Hooper
 """
 import math
+import re
 
-
-class ByteOrder(object):
-    has_white = False
-    has_luminosity = False
-    bpp = 3
-    byteorder = (0, 1, 2)
-
-
-class RGB(ByteOrder):
-    byteorder = (0, 1, 2)
-
-
-class RBG(ByteOrder):
-    byteorder = (0, 2, 1)
-
-
-class GRB(ByteOrder):
-    byteorder = (1, 0, 2)
-
-
-class GBR(ByteOrder):
-    byteorder = (1, 2, 0)
-
-
-class BRG(ByteOrder):
-    byteorder = (2, 0, 1)
-
-
-class BGR(ByteOrder):
-    byteorder = (2, 1, 0)
-
-
-class RGBW(ByteOrder):
-    byteorder = (0, 1, 2, 3)
-    bpp = 4
-    has_white = True
-
-
-class RBGW(ByteOrder):
-    byteorder = (0, 2, 1, 3)
-    bpp = 4
-    has_white = True
-
-
-class GRBW(ByteOrder):
-    byteorder = (1, 0, 2, 3)
-    bpp = 4
-    has_white = True
-
-
-class GBRW(ByteOrder):
-    byteorder = (1, 2, 0, 3)
-    bpp = 4
-    has_white = True
-
-
-class BRGW(ByteOrder):
-    byteorder = (2, 0, 1, 3)
-    bpp = 4
-    has_white = True
-
-
-class BGRW(ByteOrder):
-    byteorder = (2, 1, 0, 3)
-    bpp = 4
-    has_white = True
-
-
-class LRGB(ByteOrder):
-    byteorder = (1, 2, 3, 0)
-    bpp = 4
-    has_luminosity = True
-
-
-class LRBG(ByteOrder):
-    byteorder = (1, 3, 2, 0)
-    bpp = 4
-    has_luminosity = True
-
-
-class LGRB(ByteOrder):
-    byteorder = (2, 1, 3, 0)
-    bpp = 4
-    has_luminosity = True
-
-
-class LGBR(ByteOrder):
-    byteorder = (2, 3, 1, 0)
-    bpp = 4
-    has_luminosity = True
-
-
-class LBRG(ByteOrder):
-    byteorder = (3, 1, 2, 0)
-    bpp = 4
-    has_luminosity = True
-
-
-class LBGR(ByteOrder):
-    byteorder = (3, 2, 1, 0)
-    bpp = 4
-    has_luminosity = True
-
+RGB = "RGB"
+RBG = "RBG"
+GRB = "GRB"
+GBR = "GBR"
+BRG = "BRG"
+BGR = "BGR"
+RGBW = "RGBW"
+RBGW = "RBGW"
+GRBW = "GRBW"
+GBRW = "GBRW"
+BRGW = "BRGW"
+BGRW = "BGRW"
+LRGB = "LRGB"
+LRBG = "LRBG"
+LGRB = "LGRB"
+LGBR = "LGBR"
+LBRG = "LBRG"
+LBGR = "LBGR"
 
 DOTSTAR_LED_START_FULL_BRIGHT = 0xFF
 DOTSTAR_LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
@@ -151,30 +67,25 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
 
     :param ~int size: Number of pixels
     :param ~bytearray buf: Bytearray to store pixel data in
-    :param ~pixelbuf.ByteOrder byteorder: Byte order constant from `pixelbuf` (also sets the bpp)
+    :param ~str byteorder: Byte order string constant from `pixelbuf` (also sets the bpp)
     :param ~float brightness: Brightness (0 to 1.0, default 1.0)
     :param ~bytearray rawbuf: Bytearray to store raw pixel colors in
     :param ~int offset: Offset from start of buffer (default 0)
-    :param ~bool dotstar: DotStar mode (default False)
     :param ~bool auto_write: Whether to automatically write pixels (Default False)
     :param ~callable write_function: (optional) Callable to use to send pixels
     :param ~list write_args: (optional) Tuple or list of args to pass to ``write_function``.  The
            PixelBuf instance is appended after these args.
     """
-    def __init__(self, n, buf, byteorder=BGR, brightness=1.0, # pylint: disable=too-many-locals,too-many-arguments
-                 rawbuf=None, offset=0, dotstar=False, auto_write=False, write_function=None,
-                 write_args=None):
-        if not issubclass(byteorder, ByteOrder):
-            raise TypeError("byteorder must be a subclass of ByteOrder, got %s" % (
-                byteorder.__class__.__name__, ), )
+    def __init__(self, n, buf, byteorder=BGR, brightness=1.0,  # pylint: disable=too-many-locals,too-many-arguments
+                 rawbuf=None, offset=0, auto_write=False, write_function=None, write_args=None):
+
+        bpp, byteorder_tuple, has_white, dotstar_mode = self.parse_byteorder(byteorder)
         if not isinstance(buf, bytearray):
             raise TypeError("buf must be a bytearray")
         if rawbuf is not None and not isinstance(rawbuf, bytearray):
             raise TypeError("rawbuf must be a bytearray")
-        if dotstar and not byteorder.has_luminosity:
-            raise ValueError("Can not use DotStar with %s" % byteorder)
 
-        effective_bpp = 4 if dotstar else byteorder.bpp
+        effective_bpp = 4 if dotstar_mode else bpp
         _bytes = effective_bpp * n
         two_buffers = rawbuf is not None and buf is not None
         if two_buffers and len(buf) != len(rawbuf):
@@ -187,25 +98,22 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
 
         self._pixels = n
         self._bytes = _bytes
-        self._byteorder = byteorder
+        self._byteorder = byteorder_tuple
+        self._byteorder_string = byteorder
+        self._has_white = has_white
+        self._bpp = bpp
         self._bytearray = buf
         self._two_buffers = two_buffers
         self._rawbytearray = rawbuf
         self._offset = offset
-        self._dotstar_mode = dotstar
+        self._dotstar_mode = dotstar_mode
         self._pixel_step = effective_bpp
 
         self.auto_write = auto_write
 
-        if dotstar and not self._byteorder.has_luminosity:
-            self._byteorder = byteorder.__class__()  # Make a copy
-            self._byteorder.has_luminosity = True
-            self._byteorder.byteorder = (
-                self._byteorder.byteorder[0] + 1,
-                self._byteorder.byteorder[1] + 1,
-                self._byteorder.byteorder[2] + 1,
-                0
-            )
+        if dotstar_mode:
+            self._byteorder_tuple = (byteorder_tuple[0] + 1, byteorder_tuple[1] + 1,
+                                     byteorder_tuple[2] + 1, 0)
 
         self._write_function = write_function
         self._write_args = ()
@@ -214,16 +122,57 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
 
         self._brightness = min(1.0, max(0, brightness))
 
-        if dotstar:
+        if dotstar_mode:
             for i in range(0, self._pixels * 4, 4):
                 self._bytearray[i + self._offset] = DOTSTAR_LED_START_FULL_BRIGHT
+
+    @staticmethod
+    def parse_byteorder(byteorder):
+        """
+        Parse a Byteorder string for validity and determine bpp, byte order, and
+        dostar brightness bits.
+
+        Byteorder strings may contain the following characters:
+            R - Red
+            G - Green
+            B - Blue
+            W - White
+            d - Dotstar luminositry
+
+        :param: ~str bpp: bpp string.
+        :return: ~tuple: bpp, byteorder, has_white, dotstar_mode
+        """
+        bpp = len(byteorder)
+        dotstar_mode = False
+        has_white = False
+
+        if re.search(r'[^RGBWd]', byteorder):
+            raise ValueError("Invalid Byteorder string")
+
+        try:
+            r = byteorder.index("R")
+            g = byteorder.index("G")
+            b = byteorder.index("B")
+        except ValueError:
+            raise ValueError("Invalid Byteorder string")
+        if 'W' in byteorder:
+            w = byteorder.index("W")
+            byteorder = (r, g, b, w)
+        elif 'd' in byteorder:
+            lum = byteorder.index("d")
+            byteorder = (r, g, b, lum)
+        else:
+            byteorder = (r, g, b)
+
+        return bpp, byteorder, has_white, dotstar_mode
+
 
     @property
     def bpp(self):
         """
         The number of bytes per pixel in the buffer (read-only).
         """
-        return self._byteorder.bpp
+        return self._bpp
 
     @property
     def brightness(self):
@@ -254,9 +203,9 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
     @property
     def byteorder(self):
         """
-        `ByteOrder` class for the buffer (read-only)
+        `ByteOrder` string for the buffer (read-only)
         """
-        return self._byteorder
+        return self._byteorder_string
 
     def __len__(self):
         """
@@ -290,12 +239,12 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             w = 0
             # If all components are the same and we have a white pixel then use it
             # instead of the individual components.
-            if self.bpp == 4 and self.byteorder.has_white and r == g and g == b:
+            if self.bpp == 4 and self._has_white and r == g and g == b:
                 w = r
                 r = 0
                 g = 0
                 b = 0
-            elif self._byteorder.has_luminosity:
+            elif self._dotstar_mode:
                 w = 1.0
         elif len(value) == self.bpp:
             if self.bpp == 3:
@@ -303,17 +252,17 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             else:
                 r, g, b, w = value
                 has_w = True
-        elif len(value) == 3 and self._byteorder.has_luminosity:
+        elif len(value) == 3 and self._dotstar_mode:
             r, g, b = value
 
         if self._two_buffers:
-            self._rawbytearray[offset + self.byteorder.byteorder[0]] = r
-            self._rawbytearray[offset + self.byteorder.byteorder[1]] = g
-            self._rawbytearray[offset + self.byteorder.byteorder[2]] = b
+            self._rawbytearray[offset + self._byteorder[0]] = r
+            self._rawbytearray[offset + self._byteorder[1]] = g
+            self._rawbytearray[offset + self._byteorder[2]] = b
 
-        self._bytearray[offset + self.byteorder.byteorder[0]] = int(r * self._brightness)
-        self._bytearray[offset + self.byteorder.byteorder[1]] = int(g * self._brightness)
-        self._bytearray[offset + self.byteorder.byteorder[2]] = int(b * self._brightness)
+        self._bytearray[offset + self._byteorder[0]] = int(r * self._brightness)
+        self._bytearray[offset + self._byteorder[1]] = int(g * self._brightness)
+        self._bytearray[offset + self._byteorder[2]] = int(b * self._brightness)
         if has_w:
             if self._dotstar_mode:
                 # LED startframe is three "1" bits, followed by 5 brightness bits
@@ -321,15 +270,15 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
                 # vary based on hardware
                 # same as math.ceil(brightness * 31) & 0b00011111
                 # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
-                self._bytearray[offset + self.byteorder.byteorder[3]] = (
+                self._bytearray[offset + self._byteorder[3]] = (
                     32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
             else:
-                self._bytearray[offset + self.byteorder.byteorder[3]] = int(w * self._brightness)
+                self._bytearray[offset + self._byteorder[3]] = int(w * self._brightness)
             if self._two_buffers:
-                self._rawbytearray[offset + self.byteorder.byteorder[3]] = self._bytearray[
-                    offset + self.byteorder.byteorder[3]]
+                self._rawbytearray[offset + self._byteorder[3]] = self._bytearray[
+                    offset + self._byteorder[3]]
         elif self._dotstar_mode:
-            self._bytearray[offset + self.byteorder.byteorder[3]] = DOTSTAR_LED_START_FULL_BRIGHT
+            self._bytearray[offset + self._byteorder[3]] = DOTSTAR_LED_START_FULL_BRIGHT
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
@@ -348,13 +297,13 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             self.show()
 
     def _getitem(self, index):
-        if self.byteorder.has_white:
+        if self._has_white:
             return tuple(self._bytearray[self._offset + (index * self.bpp) +
-                                         self._byteorder.byteorder[i]] for i in range(self.bpp))
+                                         self._byteorder[i]] for i in range(self.bpp))
         return tuple(
-            [self._bytearray[self._offset + (index * self.bpp) + self._byteorder.byteorder[i]]
+            [self._bytearray[self._offset + (index * self.bpp) + self._byteorder[i]]
              for i in range(3)] + [(self._bytearray[self._offset + (index * self.bpp) +
-                                                    self._byteorder.byteorder[3]] &
+                                                    self._byteorder[3]] &
                                     DOTSTAR_LED_BRIGHTNESS) / 31.0])
 
     def __getitem__(self, index):
