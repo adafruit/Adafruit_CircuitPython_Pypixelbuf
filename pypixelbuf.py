@@ -143,11 +143,11 @@ DOTSTAR_LED_BRIGHTNESS = 0b00011111
 IS_PURE_PYTHON = True
 
 
-class PixelBuf(object):
+class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
     """
     A sequence of RGB/RGBW/LRGB pixels.
 
-    This is the purepython implementation of PixelBuf. 
+    This is the purepython implementation of PixelBuf.
 
     :param ~int size: Number of pixels
     :param ~bytearray buf: Bytearray to store pixel data in
@@ -158,13 +158,15 @@ class PixelBuf(object):
     :param ~bool dotstar: DotStar mode (default False)
     :param ~bool auto_write: Whether to automatically write pixels (Default False)
     :param ~callable write_function: (optional) Callable to use to send pixels
-    :param ~list write_args: (optional) Tuple or list of args to pass to ``write_function``.  The 
+    :param ~list write_args: (optional) Tuple or list of args to pass to ``write_function``.  The
            PixelBuf instance is appended after these args.
     """
-    def __init__(self, n, buf, byteorder=BGR, brightness=1.0, rawbuf=None, offset=0, dotstar=False,
-                 auto_write=False, write_function=None, write_args=None):
+    def __init__(self, n, buf, byteorder=BGR, brightness=1.0, # pylint: disable=too-many-locals,too-many-arguments
+                 rawbuf=None, offset=0, dotstar=False, auto_write=False, write_function=None,
+                 write_args=None):
         if not issubclass(byteorder, ByteOrder):
-            raise TypeError("byteorder must be a subclass of ByteOrder, got %s" % (byteorder.__class__.__name__, ), )
+            raise TypeError("byteorder must be a subclass of ByteOrder, got %s" % (
+                byteorder.__class__.__name__, ), )
         if not isinstance(buf, bytearray):
             raise TypeError("buf must be a bytearray")
         if rawbuf is not None and not isinstance(rawbuf, bytearray):
@@ -204,7 +206,7 @@ class PixelBuf(object):
                 self._byteorder.byteorder[2] + 1,
                 0
             )
-        
+
         self._write_function = write_function
         self._write_args = ()
         if write_args:
@@ -231,8 +233,8 @@ class PixelBuf(object):
         setting this value causes a recomputation of the values in buf.
         If only a buf was provided, then the brightness only applies to
         future pixel changes.
-        In DotStar mode 
-        """      
+        In DotStar mode
+        """
         return self._brightness
 
     @brightness.setter
@@ -256,7 +258,6 @@ class PixelBuf(object):
         """
         return self._byteorder
 
-
     def __len__(self):
         """
         Number of pixels.
@@ -271,7 +272,7 @@ class PixelBuf(object):
         if self._write_function:
             self._write_function(*self._write_args)
 
-    def _set_item(self, index, value):
+    def _set_item(self, index, value):  # pylint: disable=too-many-locals,too-many-branches
         if index < 0:
             index += len(self)
         if index >= self._pixels or index < 0:
@@ -304,7 +305,7 @@ class PixelBuf(object):
                 has_w = True
         elif len(value) == 3 and self._byteorder.has_luminosity:
             r, g, b = value
-        
+
         if self._two_buffers:
             self._rawbytearray[offset + self.byteorder.byteorder[0]] = r
             self._rawbytearray[offset + self.byteorder.byteorder[1]] = g
@@ -320,14 +321,16 @@ class PixelBuf(object):
                 # vary based on hardware
                 # same as math.ceil(brightness * 31) & 0b00011111
                 # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
-                self._bytearray[offset + self.byteorder.byteorder[3]] = (32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
+                self._bytearray[offset + self.byteorder.byteorder[3]] = (
+                    32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
             else:
                 self._bytearray[offset + self.byteorder.byteorder[3]] = int(w * self._brightness)
             if self._two_buffers:
-                self._rawbytearray[offset + self.byteorder.byteorder[3]] = self._bytearray[offset + self.byteorder.byteorder[3]]
+                self._rawbytearray[offset + self.byteorder.byteorder[3]] = self._bytearray[
+                    offset + self.byteorder.byteorder[3]]
         elif self._dotstar_mode:
             self._bytearray[offset + self.byteorder.byteorder[3]] = DOTSTAR_LED_START_FULL_BRIGHT
-            
+
     def __setitem__(self, index, val):
         if isinstance(index, slice):
             start, stop, step = index.indices(self._pixels)
@@ -346,12 +349,13 @@ class PixelBuf(object):
 
     def _getitem(self, index):
         if self.byteorder.has_white:
-            return tuple(self._bytearray[self._offset + (index * self.bpp) + self._byteorder.byteorder[i]] for i in range(self.bpp))
-        else:
-            return tuple(
-                [self._bytearray[self._offset + (index * self.bpp) + self._byteorder.byteorder[i]] for i in range(3)] + [
-                (self._bytearray[self._offset + (index * self.bpp) + self._byteorder.byteorder[3]] & DOTSTAR_LED_BRIGHTNESS) / 31.0
-            ])
+            return tuple(self._bytearray[self._offset + (index * self.bpp) +
+                                         self._byteorder.byteorder[i]] for i in range(self.bpp))
+        return tuple(
+            [self._bytearray[self._offset + (index * self.bpp) + self._byteorder.byteorder[i]]
+             for i in range(3)] + [(self._bytearray[self._offset + (index * self.bpp) +
+                                                    self._byteorder.byteorder[3]] &
+                                    DOTSTAR_LED_BRIGHTNESS) / 31.0])
 
     def __getitem__(self, index):
         if isinstance(index, slice):
@@ -375,15 +379,20 @@ class PixelBuf(object):
 
 
 def wheel(pos):
+    """
+    Helper to create a colorwheel.
+
+    :param pos: int 0-255 of color value to return
+    :return: tuple of RGB values
+    """
     # Input a value 0 to 255 to get a color value.
     # The colours are a transition r - g - b - back to r.
     if pos < 0 or pos > 255:
-        return (0, 0, 0)
+        return 0, 0, 0
     if pos < 85:
-        return (255 - pos * 3, pos * 3, 0)
+        return 255 - pos * 3, pos * 3, 0
     if pos < 170:
         pos -= 85
-        return (0, 255 - pos * 3, pos * 3)
+        return 0, 255 - pos * 3, pos * 3
     pos -= 170
-    return (pos * 3, 0, 255 - pos * 3)
- 
+    return pos * 3, 0, 255 - pos * 3
