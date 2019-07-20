@@ -213,7 +213,6 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         """
         return self._pixels
 
-
     def show(self):
         """
         Call the associated write function to display the pixels
