@@ -45,12 +45,12 @@ GRBW = "GRBW"
 GBRW = "GBRW"
 BRGW = "BRGW"
 BGRW = "BGRW"
-LRGB = "LRGB"
-LRBG = "LRBG"
-LGRB = "LGRB"
-LGBR = "LGBR"
-LBRG = "LBRG"
-LBGR = "LBGR"
+RGBd = "RGBd"
+RBGd = "RBGd"
+GRBd = "GRBd"
+GBRd = "GBRd"
+BRGd = "BRGd"
+BGRd = "BGRd"
 
 DOTSTAR_LED_START_FULL_BRIGHT = 0xFF
 DOTSTAR_LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
@@ -61,11 +61,11 @@ IS_PURE_PYTHON = True
 
 class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
     """
-    A sequence of RGB/RGBW/LRGB pixels.
+    A sequence of RGB/RGBW pixels.
 
-    This is the purepython implementation of PixelBuf.
+    This is the pure python implementation of PixelBuf.
 
-    :param ~int size: Number of pixels
+    :param ~int n: Number of pixels
     :param ~bytearray buf: Bytearray to store pixel data in
     :param ~str byteorder: Byte order string constant from `pixelbuf` (also sets the bpp)
     :param ~float brightness: Brightness (0 to 1.0, default 1.0)
