@@ -76,7 +76,7 @@ todo_include_todos = False
 
 # If this is True, todo emits a warning for each TODO entries. The default is False.
 todo_emit_warnings = True
-D
+
 napoleon_numpy_docstring = False
 
 # -- Options for HTML output ----------------------------------------------
