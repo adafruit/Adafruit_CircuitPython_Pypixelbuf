@@ -33,8 +33,6 @@ This is a work in progress.
 import math
 import re
 
-# pylint: disable=invalid-name
-
 RGB = "RGB"
 RBG = "RBG"
 GRB = "GRB"
@@ -47,12 +45,12 @@ GRBW = "GRBW"
 GBRW = "GBRW"
 BRGW = "BRGW"
 BGRW = "BGRW"
-RGBd = "RGBd"
-RBGd = "RBGd"
-GRBd = "GRBd"
-GBRd = "GBRd"
-BRGd = "BRGd"
-BGRd = "BGRd"
+RGBD = "RGBD"
+RBGD = "RBGD"
+GRBD = "GRBD"
+GBRD = "GBRD"
+BRGD = "BRGD"
+BGRD = "BGRD"
 
 DOTSTAR_LED_START_FULL_BRIGHT = 0xFF
 DOTSTAR_LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
@@ -139,7 +137,7 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             G - Green
             B - Blue
             W - White
-            d - Dotstar luminositry
+            D - Dotstar luminositry
 
         :param: ~str bpp: bpp string.
         :return: ~tuple: bpp, byteorder, has_white, dotstar_mode
@@ -161,7 +159,7 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             w = byteorder.index("W")
             byteorder = (r, g, b, w)
         elif 'd' in byteorder:
-            lum = byteorder.index("d")
+            lum = byteorder.index("D")
             byteorder = (r, g, b, lum)
         else:
             byteorder = (r, g, b)
