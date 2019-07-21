@@ -33,6 +33,8 @@ This is a work in progress.
 import math
 import re
 
+# pylint: disable=invalid-name
+
 RGB = "RGB"
 RBG = "RBG"
 GRB = "GRB"
@@ -63,11 +65,11 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
     """
     A sequence of RGB/RGBW pixels.
 
-    This is the pure python implementation of PixelBuf.
+    This is the pure python implementation of _pixelbuf.
 
     :param ~int n: Number of pixels
     :param ~bytearray buf: Bytearray to store pixel data in
-    :param ~str byteorder: Byte order string constant from `pixelbuf` (also sets the bpp)
+    :param ~str byteorder: Byte order string constant (also sets the bpp)
     :param ~float brightness: Brightness (0 to 1.0, default 1.0)
     :param ~bytearray rawbuf: Bytearray to store raw pixel colors in
     :param ~int offset: Offset from start of buffer (default 0)
@@ -203,7 +205,7 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
     @property
     def byteorder(self):
         """
-        `ByteOrder` string for the buffer (read-only)
+        ByteOrder string for the buffer (read-only)
         """
         return self._byteorder_string
 
