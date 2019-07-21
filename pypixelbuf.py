@@ -24,7 +24,7 @@
 """
 `pypixelbuf` - A pure python implementation of pixelbuf
 =======================================================
-This class is used when `pixelbuf` is not available in a build.
+This class is used when _pixelbuf is not available in a build.
 
 This is a work in progress.
 
