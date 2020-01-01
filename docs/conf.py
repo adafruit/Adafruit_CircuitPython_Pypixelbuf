@@ -34,8 +34,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Adafruit Pypixelbuf Library'
-copyright = u'2019 Roy Hooper'
+project = u'Adafruit PyPixelBuf Library'
+copyright = u'2020 Roy Hooper'
 author = u'Roy Hooper'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -135,7 +135,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'AdafruitPypixelbufLibrary.tex', u'AdafruitPypixelbuf Library Documentation',
+    (master_doc, 'AdafruitPyPixelBufLibrary.tex', u'AdafruitPyPixelBuf Library Documentation',
      author, 'manual'),
 ]
 
@@ -144,7 +144,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'AdafruitPypixelbuflibrary', u'Adafruit Pypixelbuf Library Documentation',
+    (master_doc, 'AdafruitPyPixelBuflibrary', u'Adafruit PyPixelBuf Library Documentation',
      [author], 1)
 ]
 
@@ -154,7 +154,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'AdafruitPypixelbufLibrary', u'Adafruit Pypixelbuf Library Documentation',
-     author, 'AdafruitPypixelbufLibrary', 'One line description of project.',
+    (master_doc, 'AdafruitPyPixelBufLibrary', u'Adafruit PyPixelBuf Library Documentation',
+     author, 'AdafruitPyPixelBufLibrary', 'One line description of project.',
      'Miscellaneous'),
 ]

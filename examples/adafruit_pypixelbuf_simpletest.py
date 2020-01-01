@@ -1,4 +1,4 @@
-import pypixelbuf
+import adafruit_pypixelbuf
 
 STATUS = {
     "callback_called": False

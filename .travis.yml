@@ -11,8 +11,11 @@ python:
 cache:
   pip: true
 
+# TODO: if deployment to PyPi is desired, change 'DEPLOY_PYPI' to "true",
+#       or remove the env block entirely and remove the condition in the
+#       deploy block.
 env:
-  - DEPLOY_PYPI="true"
+  - DEPLOY_PYPI="false"
 
 deploy:
   - provider: releases
@@ -39,7 +42,7 @@ install:
   - pip install --force-reinstall pylint==1.9.2
 
 script:
-  - pylint pypixelbuf.py
+  - pylint adafruit_pypixelbuf.py
   - ([[ ! -d "examples" ]] || pylint --disable=missing-docstring,invalid-name,bad-whitespace examples/*.py)
   - circuitpython-build-bundles --filename_prefix adafruit-circuitpython-pypixelbuf --library_location .
   - cd docs && sphinx-build -E -W -b html . _build/html && cd ..
