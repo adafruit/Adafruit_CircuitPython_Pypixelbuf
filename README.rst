@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_PyPixelBuf.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_PyPixelBuf
+.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Pypixelbuf.svg?branch=master
+    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Pypixelbuf
     :alt: Build Status
 
 Pure python implementation of _pixelbuf for smaller boards.
@@ -83,7 +83,7 @@ Contributing
 ============
 
 Contributions are welcome! Please read our `Code of Conduct
-<https://github.com/adafruit/Adafruit_CircuitPython_PyPixelBuf/blob/master/CODE_OF_CONDUCT.md>`_
+<https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf/blob/master/CODE_OF_CONDUCT.md>`_
 before contributing to help this project stay welcoming.
 
 Documentation
