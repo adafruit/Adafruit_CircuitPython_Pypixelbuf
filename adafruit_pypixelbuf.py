@@ -90,11 +90,6 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             self._byteorder_tuple = (byteorder_tuple[0] + 1, byteorder_tuple[1] + 1,
                                      byteorder_tuple[2] + 1, 0)
 
-        self._write_function = write_function
-        self._write_args = ()
-        if write_args:
-            self._write_args = tuple(self._write_args) + (self, )
-
         self._brightness = min(1.0, max(0, brightness))
 
         if dotstar_mode:
@@ -133,9 +128,10 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         if 'W' in byteorder:
             w = byteorder.index("W")
             byteorder = (r, g, b, w)
-        elif 'd' in byteorder:
+        elif 'P' in byteorder:
             lum = byteorder.index("P")
             byteorder = (r, g, b, lum)
+            dotstar_mode = True
         else:
             byteorder = (r, g, b)
 
@@ -191,8 +187,7 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         """
         Call the associated write function to display the pixels
         """
-        if self._write_function:
-            self._write_function(*self._write_args)
+        raise NotImplementedError("Must be subclassed")
 
     def _set_item(self, index, value):  # pylint: disable=too-many-locals,too-many-branches
         if index < 0:
@@ -257,11 +252,6 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
     def __setitem__(self, index, val):
         if isinstance(index, slice):
             start, stop, step = index.indices(self._pixels)
-            length = stop - start
-            if step != 0:
-                length = math.ceil(length / step)
-            if len(val) != length:
-                raise ValueError("Slice and input sequence size do not match.")
             for val_i, in_i in enumerate(range(start, stop, step)):
                 self._set_item(in_i, val[val_i])
         else:
@@ -282,7 +272,7 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         elif self._dotstar_mode:
             value.append((self._bytearray[start + self._byteorder[3]] & DOTSTAR_LED_BRIGHTNESS) /
                          31.0)
-        return tuple(value)
+        return value
 
     def __getitem__(self, index):
         if isinstance(index, slice):
