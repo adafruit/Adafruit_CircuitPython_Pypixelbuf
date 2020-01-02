@@ -29,7 +29,6 @@ in neopixel.py and adafruit_dotstar.py.
 
 * Author(s): Damien P. George &  Limor Fried & Scott Shawcroft & Roy Hooper
 """
-import math
 import re
 
 DOTSTAR_LED_START_FULL_BRIGHT = 0xFF
