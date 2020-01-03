@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Pypixelbuf.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Pypixelbuf
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf/actions
     :alt: Build Status
 
 Pure python implementation of _pixelbuf for smaller boards.
