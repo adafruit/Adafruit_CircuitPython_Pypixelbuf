@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 
 """
-`adafruit_pypixelbuf` - A pure python implementation of pixelbuf
-=======================================================
+`adafruit_pypixelbuf` - A pure python implementation of _pixelbuf
+=================================================================
 This class is used when _pixelbuf is not available in CircuitPython.  It is based on the work
 in neopixel.py and adafruit_dotstar.py.
 
