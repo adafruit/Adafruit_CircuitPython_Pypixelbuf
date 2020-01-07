@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Pypixelbuf.svg?branch=master
-    :target: https://travis-ci.com/adafruit/Adafruit_CircuitPython_Pypixelbuf
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf/actions
     :alt: Build Status
 
 Pure python implementation of _pixelbuf for smaller boards.
@@ -24,7 +24,7 @@ This driver depends on:
 
 Please ensure all dependencies are available on the CircuitPython filesystem.
 This is easily achieved by downloading
-`the Adafruit library and driver bundle <https://github.com/adafruit/Adafruit_CircuitPython_Bundle>`_.
+`the Adafruit library and driver bundle <https://circuitpython.org/libraries>`_.
 
 Installing from PyPI
 =====================
@@ -58,21 +58,15 @@ This example tests that the pypixelbuf works.
 
 .. code-block:: python
 
-    import pypixelbuf
+    class TestBuf(adafruit_pypixelbuf.PixelBuf):
+        called = False
 
-    callback_called = False
-
-
-    def callback():
-        global callback_called
-        callback_called = True
+        def show(self):
+            self.called = True
 
 
-    buffer = pypixelbuf.PixelBuf(20, bytearray(20 * 3), pypixelbuf.RGB, 1.0, auto_write=True, write_function=callback)
-
+    buffer = TestBuf(20, bytearray(20 * 3), "RGB", 1.0, auto_write=True)
     buffer[0] = (1, 2, 3)
-
-    print(callback_called)
 
 
 Contributing

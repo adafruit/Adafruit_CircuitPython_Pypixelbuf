@@ -22,7 +22,7 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
 
-    description='Pure python implementation of _pixelbuf',
+    description='Pure python implementation of _pixelbuf for smaller boards.',
     long_description=long_description,
     long_description_content_type='text/x-rst',
 
@@ -53,11 +53,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='adafruit blinka circuitpython micropython pypixelbuf pixelbuf led',
+    keywords='adafruit blinka circuitpython micropython pypixelbuf pypixelbuf pixelbuf led',
 
-    # You can just specify the packages manually here if your project is
-    # simple. Or you can use find_packages().
-    # TODO: IF LIBRARY FILES ARE A PACKAGE FOLDER,
-    #       CHANGE `py_modules=['...']` TO `packages=['...']`
-    py_modules=['pypixelbuf'],
+    py_modules=['adafruit_pypixelbuf'],
 )
