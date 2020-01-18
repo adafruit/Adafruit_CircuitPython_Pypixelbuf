@@ -95,6 +95,11 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             for i in range(0, self._pixels * 4, 4):
                 self._bytearray[i + self._offset] = DOTSTAR_LED_START_FULL_BRIGHT
 
+    @property
+    def buf(self):
+        """The brightness adjusted pixel buffer data."""
+        return bytearray([int(i * self.brightness) for i in self._bytearray])
+
     @staticmethod
     def parse_byteorder(byteorder):
         """
