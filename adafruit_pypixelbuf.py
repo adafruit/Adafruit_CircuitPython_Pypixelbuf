@@ -97,8 +97,8 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
 
     @property
     def buf(self):
+        """The brightness adjusted pixel buffer data."""
         return bytearray([int(i * self.brightness) for i in self._bytearray])
-
 
     @staticmethod
     def parse_byteorder(byteorder):
