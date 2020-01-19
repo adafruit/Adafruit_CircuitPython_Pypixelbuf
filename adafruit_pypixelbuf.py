@@ -321,4 +321,6 @@ def fill(pixelbuf, color):
     pixelbuf.auto_write = False
     for i, _ in enumerate(pixelbuf):
         pixelbuf[i] = color
+    if auto_write:
+        pixelbuf.show()
     pixelbuf.auto_write = auto_write
