@@ -29,7 +29,6 @@ in neopixel.py and adafruit_dotstar.py.
 
 * Author(s): Damien P. George &  Limor Fried & Scott Shawcroft & Roy Hooper
 """
-import re
 
 DOTSTAR_LED_START_FULL_BRIGHT = 0xFF
 DOTSTAR_LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
@@ -120,7 +119,7 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         dotstar_mode = False
         has_white = False
 
-        if re.search(r'[^RGBWP]', byteorder):
+        if byteorder.strip("RGBWP") != "":
             raise ValueError("Invalid Byteorder string")
 
         try:
