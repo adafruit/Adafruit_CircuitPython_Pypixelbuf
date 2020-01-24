@@ -4,14 +4,15 @@ import adafruit_pypixelbuf
 class TestBuf(adafruit_pypixelbuf.PixelBuf):
     called = False
 
-    def show(self):
+    def _transmit(self, buffer):
+        print(buffer)
         self.called = True
 
 
-buffer = TestBuf(20, bytearray(20 * 3), "RGB", 1.0, auto_write=True)
-buffer[0] = (1, 2, 3)
+test_buffer = TestBuf(20, byteorder="RGB", brightness=1.0, auto_write=True)
+test_buffer[0] = (1, 2, 3)
 
-print(buffer[0])
-print(buffer[0:2])
-print(buffer[0:2:2])
-print(buffer.called)
+print(test_buffer[0])
+print(test_buffer[0:2])
+print(test_buffer[0:2:2])
+print(test_buffer.called)
