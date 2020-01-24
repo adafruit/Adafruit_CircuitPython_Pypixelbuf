@@ -50,8 +50,10 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
     """
     def __init__(self, n, buf=None, *, byteorder="BGR", brightness=1.0, auto_write=False,
                  rawbuf=None, header=b"", trailer=b""):
+        # pylint: disable=too-many-locals
 
         # Ignore buf and rawbuf. They are there for backwards compatibility with NeoPixel 4.1.0.
+        # pylint: disable=unused-argument
         buf = None
         rawbuf = None
 
@@ -73,7 +75,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         # Use a memoryview to only manipulate the color bits in the overall buffer.
         self._post_brightness_buffer = memoryview(self._transmit_buffer)[start:end]
 
-        self._pixels = n
+        self._pixel_count = n
         self._bytes = _bytes
         self._byteorder = byteorder_tuple
         self._byteorder_string = byteorder
@@ -96,7 +98,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         self.auto_write = auto_write
 
         if dotstar_mode:
-            for i in range(0, self._pixels * 4, 4):
+            for i in range(0, self._pixel_count * 4, 4):
                 self._post_brightness_buffer[i] = DOTSTAR_LED_START_FULL_BRIGHT
 
     @property
@@ -168,7 +170,11 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
 
     @brightness.setter
     def brightness(self, new_brightness):
-        self._brightness = min(max(new_brightness, 0.0), 1.0)
+        new_brightness = min(max(new_brightness, 0.0), 1.0)
+        if self._brightness == new_brightness:
+            return
+
+        self._brightness = new_brightness
 
         # Allocate a second buffer for unadjusted pixel values if needed.
         if self._pre_brightness_buffer is None and new_brightness < 1.0:
@@ -178,8 +184,8 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         # again for a brightness < 1.0.
 
         for i in range(0, self._bytes):
-            if self._dotstar_mode:
-                self._post_brightness_buffer[i] = int(self._pre_brightness_buffer[i] * new_brightness)
+            # TODO: Fix this for DotStars which have a per-pixel header.
+            self._post_brightness_buffer[i] = int(self._pre_brightness_buffer[i] * new_brightness)
 
         if self.auto_write:
             self.show()
@@ -195,7 +201,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         """
         Number of pixels.
         """
-        return self._pixels
+        return self._pixel_count
 
     def _transmit(self, buffer):
         """
@@ -209,10 +215,11 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         """
         self._transmit(self._transmit_buffer)
 
-    def _set_item(self, index, value):  # pylint: disable=too-many-locals,too-many-branches
+    def _set_item(self, index, value):
+        # pylint: disable=too-many-locals,too-many-branches, too-many-statements
         if index < 0:
             index += len(self)
-        if index >= self._pixels or index < 0:
+        if index >= self._pixel_count or index < 0:
             raise IndexError
         offset = (index * self.bpp)
         r = 0
@@ -255,29 +262,29 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
             self._post_brightness_buffer[offset + self._byteorder[1]] = g
             self._post_brightness_buffer[offset + self._byteorder[2]] = b
 
-
-        if has_w:
+        if has_w or self._dotstar_mode:
             white_offset = offset + self._byteorder[3]
-            if self._dotstar_mode:
-                # LED startframe is three "1" bits, followed by 5 brightness bits
-                # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
-                # vary based on hardware
-                # same as math.ceil(brightness * 31) & 0b00011111
-                # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
-                self._post_brightness_buffer[offset + self._byteorder[3]] = (
-                    32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
-            else:
-                if self._pre_brightness_buffer is not None:
-                    self._pre_brightness_buffer[white_offset] = w
-                    self._post_brightness_buffer[white_offset] = int(w * self._brightness)
+            if has_w:
+                if self._dotstar_mode:
+                    # LED startframe is three "1" bits, followed by 5 brightness bits
+                    # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
+                    # vary based on hardware
+                    # same as math.ceil(brightness * 31) & 0b00011111
+                    # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
+                    self._post_brightness_buffer[offset + self._byteorder[3]] = (
+                        32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
                 else:
-                    self._post_brightness_buffer[white_offset] = w
-        elif self._dotstar_mode:
-            self._post_brightness_buffer[offset + self._byteorder[3]] = DOTSTAR_LED_START_FULL_BRIGHT
+                    if self._pre_brightness_buffer is not None:
+                        self._pre_brightness_buffer[white_offset] = w
+                        self._post_brightness_buffer[white_offset] = int(w * self._brightness)
+                    else:
+                        self._post_brightness_buffer[white_offset] = w
+            elif self._dotstar_mode:
+                self._post_brightness_buffer[white_offset] = DOTSTAR_LED_START_FULL_BRIGHT
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
-            start, stop, step = index.indices(self._pixels)
+            start, stop, step = index.indices(self._pixel_count)
             for val_i, in_i in enumerate(range(start, stop, step)):
                 self._set_item(in_i, val[val_i])
         else:
@@ -306,12 +313,12 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
     def __getitem__(self, index):
         if isinstance(index, slice):
             out = []
-            for in_i in range(*index.indices(len(self._bytearray) // self.bpp)):
+            for in_i in range(*index.indices(self._pixel_count)):
                 out.append(self._getitem(in_i))
             return out
         if index < 0:
             index += len(self)
-        if index >= self._pixels or index < 0:
+        if index >= self._pixel_count or index < 0:
             raise IndexError
         return self._getitem(index)
 
