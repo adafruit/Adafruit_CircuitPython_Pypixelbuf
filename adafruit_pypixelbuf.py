@@ -35,7 +35,7 @@ DOTSTAR_LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 DOTSTAR_LED_BRIGHTNESS = 0b00011111
 
 
-class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
+class PixelBuf:  # pylint: disable=too-many-instance-attributes
     """
     A sequence of RGB/RGBW pixels.
 
@@ -49,8 +49,17 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
     :param ~int offset: Offset from start of buffer (default 0)
     :param ~bool auto_write: Whether to automatically write pixels (Default False)
     """
-    def __init__(self, n, buf, byteorder="BGR", brightness=1.0,  # pylint: disable=too-many-locals,too-many-arguments
-                 rawbuf=None, offset=0, auto_write=False):
+
+    def __init__(  # pylint: disable=too-many-locals,too-many-arguments
+        self,
+        n,
+        buf,
+        byteorder="BGR",
+        brightness=1.0,
+        rawbuf=None,
+        offset=0,
+        auto_write=False,
+    ):
 
         bpp, byteorder_tuple, has_white, dotstar_mode = self.parse_byteorder(byteorder)
         if not isinstance(buf, bytearray):
@@ -67,7 +76,7 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         if (len(buf) + offset) < _bytes:
             raise TypeError("buf is too small")
         if two_buffers and (len(rawbuf) + offset) < _bytes:
-            raise TypeError("buf is too small. need %d bytes" % (_bytes, ))
+            raise TypeError("buf is too small. need %d bytes" % (_bytes,))
 
         self._pixels = n
         self._bytes = _bytes
@@ -85,8 +94,12 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         self.auto_write = auto_write
 
         if dotstar_mode:
-            self._byteorder_tuple = (byteorder_tuple[0] + 1, byteorder_tuple[1] + 1,
-                                     byteorder_tuple[2] + 1, 0)
+            self._byteorder_tuple = (
+                byteorder_tuple[0] + 1,
+                byteorder_tuple[1] + 1,
+                byteorder_tuple[2] + 1,
+                0,
+            )
 
         self._brightness = min(1.0, max(0, brightness))
 
@@ -128,10 +141,10 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
             b = byteorder.index("B")
         except ValueError:
             raise ValueError("Invalid Byteorder string")
-        if 'W' in byteorder:
+        if "W" in byteorder:
             w = byteorder.index("W")
             byteorder = (r, g, b, w)
-        elif 'P' in byteorder:
+        elif "P" in byteorder:
             lum = byteorder.index("P")
             byteorder = (r, g, b, lum)
             dotstar_mode = True
@@ -192,7 +205,9 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         """
         raise NotImplementedError("Must be subclassed")
 
-    def _set_item(self, index, value):  # pylint: disable=too-many-locals,too-many-branches
+    def _set_item(
+        self, index, value
+    ):  # pylint: disable=too-many-locals,too-many-branches
         if index < 0:
             index += len(self)
         if index >= self._pixels or index < 0:
@@ -205,8 +220,8 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         has_w = False
         if isinstance(value, int):
             r = value >> 16
-            g = (value >> 8) & 0xff
-            b = value & 0xff
+            g = (value >> 8) & 0xFF
+            b = value & 0xFF
             w = 0
             # If all components are the same and we have a white pixel then use it
             # instead of the individual components.
@@ -243,12 +258,14 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
                 # same as math.ceil(brightness * 31) & 0b00011111
                 # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
                 self._bytearray[offset + self._byteorder[3]] = (
-                    32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
+                    32 - int(32 - w * 31) & 0b00011111
+                ) | DOTSTAR_LED_START
             else:
                 self._bytearray[offset + self._byteorder[3]] = int(w * self._brightness)
             if self._two_buffers:
                 self._rawbytearray[offset + self._byteorder[3]] = self._bytearray[
-                    offset + self._byteorder[3]]
+                    offset + self._byteorder[3]
+                ]
         elif self._dotstar_mode:
             self._bytearray[offset + self._byteorder[3]] = DOTSTAR_LED_START_FULL_BRIGHT
 
@@ -273,8 +290,10 @@ class PixelBuf(object):  # pylint: disable=too-many-instance-attributes
         if self._has_white:
             value.append(self._bytearray[start + self._byteorder[2]])
         elif self._dotstar_mode:
-            value.append((self._bytearray[start + self._byteorder[3]] & DOTSTAR_LED_BRIGHTNESS) /
-                         31.0)
+            value.append(
+                (self._bytearray[start + self._byteorder[3]] & DOTSTAR_LED_BRIGHTNESS)
+                / 31.0
+            )
         return value
 
     def __getitem__(self, index):
