@@ -54,7 +54,7 @@ To install in a virtual environment in your current project:
 Usage Example
 =============
 
-This example tests that the pypixelbuf works.
+This example tests that pypixelbuf works.
 
 .. code-block:: python
 
