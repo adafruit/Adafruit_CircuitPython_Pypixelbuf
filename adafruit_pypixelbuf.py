@@ -42,41 +42,40 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
     This is the pure python implementation of CircuitPython's _pixelbuf.
 
     :param ~int n: Number of pixels
-    :param ~bytearray buf: Bytearray to store pixel data in
     :param ~str byteorder: Byte order string constant (also sets bpp)
     :param ~float brightness: Brightness (0 to 1.0, default 1.0)
-    :param ~bytearray rawbuf: Bytearray to store raw pixel colors in
-    :param ~int offset: Offset from start of buffer (default 0)
     :param ~bool auto_write: Whether to automatically write pixels (Default False)
+    :param bytes header: Sequence of bytes to always send before pixel values.
+    :param bytes trailer: Sequence of bytes to always send after pixel values.
     """
 
     def __init__(  # pylint: disable=too-many-locals,too-many-arguments
         self,
         n,
-        buf,
         byteorder="BGR",
         brightness=1.0,
-        rawbuf=None,
-        offset=0,
         auto_write=False,
+        header=None,
+        trailer=None,
     ):
 
         bpp, byteorder_tuple, has_white, dotstar_mode = self.parse_byteorder(byteorder)
-        if not isinstance(buf, bytearray):
-            raise TypeError("buf must be a bytearray")
-        if rawbuf is not None and not isinstance(rawbuf, bytearray):
-            raise TypeError("rawbuf must be a bytearray")
 
         effective_bpp = 4 if dotstar_mode else bpp
         _bytes = effective_bpp * n
-        two_buffers = rawbuf is not None and buf is not None
-        if two_buffers and len(buf) != len(rawbuf):
-            raise ValueError("rawbuf is not the same size as buf")
+        buf = bytearray(_bytes)
+        offset = 0
 
-        if (len(buf) + offset) < _bytes:
-            raise TypeError("buf is too small")
-        if two_buffers and (len(rawbuf) + offset) < _bytes:
-            raise TypeError("buf is too small. need %d bytes" % (_bytes,))
+        if header is not None:
+            if not isinstance(header, bytearray):
+                raise TypeError("header must be a bytearray")
+            buf = header + buf
+            offset = len(header)
+
+        if trailer is not None:
+            if not isinstance(trailer, bytearray):
+                raise TypeError("trailer must be a bytearray")
+            buf += trailer
 
         self._pixels = n
         self._bytes = _bytes
@@ -84,9 +83,8 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         self._byteorder_string = byteorder
         self._has_white = has_white
         self._bpp = bpp
-        self._bytearray = buf
-        self._two_buffers = two_buffers
-        self._rawbytearray = rawbuf
+        self._pre_brightness_buffer = None
+        self._post_brightness_buffer = buf
         self._offset = offset
         self._dotstar_mode = dotstar_mode
         self._pixel_step = effective_bpp
@@ -101,16 +99,8 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
                 0,
             )
 
-        self._brightness = min(1.0, max(0, brightness))
-
-        if dotstar_mode:
-            for i in range(0, self._pixels * 4, 4):
-                self._bytearray[i + self._offset] = DOTSTAR_LED_START_FULL_BRIGHT
-
-    @property
-    def buf(self):
-        """The brightness adjusted pixel buffer data."""
-        return bytearray([int(i * self.brightness) for i in self._bytearray])
+        self._brightness = 1.0
+        self.brightness = brightness
 
     @staticmethod
     def parse_byteorder(byteorder):
@@ -144,6 +134,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         if "W" in byteorder:
             w = byteorder.index("W")
             byteorder = (r, g, b, w)
+            has_white = True
         elif "P" in byteorder:
             lum = byteorder.index("P")
             byteorder = (r, g, b, lum)
@@ -164,24 +155,33 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
     def brightness(self):
         """
         Float value between 0 and 1.  Output brightness.
-        If the PixelBuf was allocated with two both a buf and a rawbuf,
-        setting this value causes a recomputation of the values in buf.
-        If only a buf was provided, then the brightness only applies to
-        future pixel changes.
-        In DotStar mode
+
+        When brightness is less than 1.0, a second buffer will be used to store the color values
+        before they are adjusted for brightness.
         """
         return self._brightness
 
     @brightness.setter
     def brightness(self, value):
-        self._brightness = min(max(value, 0.0), 1.0)
+        value = min(max(value, 0.0), 1.0)
+        change = value - self._brightness
+        if -0.001 < change < 0.001:
+            return
 
-        # Adjust brightness of existing pixels when two buffers are available
-        if self._two_buffers:
-            offset_check = self._offset % self._pixel_step
-            for i in range(self._offset, self._bytes + self._offset):
-                if self._dotstar_mode and (i % 4 != offset_check):
-                    self._bytearray[i] = int(self._rawbytearray[i] * self._brightness)
+        self._brightness = value
+
+        if self._pre_brightness_buffer is None:
+            self._pre_brightness_buffer = bytearray(self._post_brightness_buffer)
+
+        # Adjust brightness of existing pixels
+        offset_check = self._offset % self._pixel_step
+        for i in range(self._offset, self._bytes + self._offset):
+            # Don't adjust per-pixel luminance bytes in dotstar mode
+            if self._dotstar_mode and (i % 4 != offset_check):
+                continue
+            self._post_brightness_buffer[i] = int(
+                self._pre_brightness_buffer[i] * self._brightness
+            )
 
         if self.auto_write:
             self.show()
@@ -203,21 +203,25 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         """
         Call the associated write function to display the pixels
         """
-        raise NotImplementedError("Must be subclassed")
+        return self._transmit(self._post_brightness_buffer)
 
-    def _set_item(
-        self, index, value
-    ):  # pylint: disable=too-many-locals,too-many-branches
-        if index < 0:
-            index += len(self)
-        if index >= self._pixels or index < 0:
-            raise IndexError
-        offset = self._offset + (index * self.bpp)
+    def fill(self, color):
+        """
+        Fills the given pixelbuf with the given color.
+        :param pixelbuf: A pixel object.
+        :param color: Color to set.
+        """
+        r, g, b, w = self._parse_color(color)
+        for i in range(self._pixels):
+            self._set_item(i, r, g, b, w)
+        if self.auto_write:
+            self.show()
+
+    def _parse_color(self, value):
         r = 0
         g = 0
         b = 0
         w = 0
-        has_w = False
         if isinstance(value, int):
             r = value >> 16
             g = (value >> 8) & 0xFF
@@ -225,81 +229,102 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
             w = 0
             # If all components are the same and we have a white pixel then use it
             # instead of the individual components.
-            if self.bpp == 4 and self._has_white and r == g and g == b:
+            if self._bpp == 4 and self._has_white and r == g and g == b:
                 w = r
                 r = 0
                 g = 0
                 b = 0
             elif self._dotstar_mode:
                 w = 1.0
-        elif len(value) == self.bpp:
-            if self.bpp == 3:
+        elif len(value) == self._bpp:
+            if self._bpp == 3:
                 r, g, b = value
             else:
                 r, g, b, w = value
-                has_w = True
         elif len(value) == 3 and self._dotstar_mode:
             r, g, b = value
 
-        if self._two_buffers:
-            self._rawbytearray[offset + self._byteorder[0]] = r
-            self._rawbytearray[offset + self._byteorder[1]] = g
-            self._rawbytearray[offset + self._byteorder[2]] = b
+        if self._bpp == 4 and self._dotstar_mode:
+            # LED startframe is three "1" bits, followed by 5 brightness bits
+            # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
+            # vary based on hardware
+            # same as math.ceil(brightness * 31) & 0b00011111
+            # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
+            w = (32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
 
-        self._bytearray[offset + self._byteorder[0]] = int(r * self._brightness)
-        self._bytearray[offset + self._byteorder[1]] = int(g * self._brightness)
-        self._bytearray[offset + self._byteorder[2]] = int(b * self._brightness)
+        return (r, g, b, w)
 
-        if has_w:
-            if self._dotstar_mode:
-                # LED startframe is three "1" bits, followed by 5 brightness bits
-                # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
-                # vary based on hardware
-                # same as math.ceil(brightness * 31) & 0b00011111
-                # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
-                self._bytearray[offset + self._byteorder[3]] = (
-                    32 - int(32 - w * 31) & 0b00011111
-                ) | DOTSTAR_LED_START
-            else:
-                self._bytearray[offset + self._byteorder[3]] = int(w * self._brightness)
-            if self._two_buffers:
-                self._rawbytearray[offset + self._byteorder[3]] = self._bytearray[
-                    offset + self._byteorder[3]
-                ]
-        elif self._dotstar_mode:
-            self._bytearray[offset + self._byteorder[3]] = DOTSTAR_LED_START_FULL_BRIGHT
+    def _set_item(
+        self, index, r, g, b, w
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-arguments
+        if index < 0:
+            index += len(self)
+        if index >= self._pixels or index < 0:
+            raise IndexError
+        offset = self._offset + (index * self._bpp)
+
+        if self._pre_brightness_buffer is not None:
+            if self._bpp == 4:
+                self._pre_brightness_buffer[offset + self._byteorder[3]] = w
+            self._pre_brightness_buffer[offset + self._byteorder[0]] = r
+            self._pre_brightness_buffer[offset + self._byteorder[1]] = g
+            self._pre_brightness_buffer[offset + self._byteorder[2]] = b
+
+        if self._bpp == 4:
+            # Only apply brightness if w is actually white (aka not DotStar.)
+            if not self._dotstar_mode:
+                w = int(w * self._brightness)
+            self._post_brightness_buffer[offset + self._byteorder[3]] = w
+
+        self._post_brightness_buffer[offset + self._byteorder[0]] = int(
+            r * self._brightness
+        )
+        self._post_brightness_buffer[offset + self._byteorder[1]] = int(
+            g * self._brightness
+        )
+        self._post_brightness_buffer[offset + self._byteorder[2]] = int(
+            b * self._brightness
+        )
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
             start, stop, step = index.indices(self._pixels)
             for val_i, in_i in enumerate(range(start, stop, step)):
-                self._set_item(in_i, val[val_i])
+                r, g, b, w = self._parse_color(val[val_i])
+                self._set_item(in_i, r, g, b, w)
         else:
-            self._set_item(index, val)
+            r, g, b, w = self._parse_color(val)
+            self._set_item(index, r, g, b, w)
 
         if self.auto_write:
             self.show()
 
     def _getitem(self, index):
-        start = self._offset + (index * self.bpp)
+        start = self._offset + (index * self._bpp)
+        buffer = (
+            self._pre_brightness_buffer
+            if self._pre_brightness_buffer is not None
+            else self._post_brightness_buffer
+        )
         value = [
-            self._bytearray[start + self._byteorder[0]],
-            self._bytearray[start + self._byteorder[1]],
-            self._bytearray[start + self._byteorder[2]],
+            buffer[start + self._byteorder[0]],
+            buffer[start + self._byteorder[1]],
+            buffer[start + self._byteorder[2]],
         ]
         if self._has_white:
-            value.append(self._bytearray[start + self._byteorder[2]])
+            value.append(buffer[start + self._byteorder[3]])
         elif self._dotstar_mode:
             value.append(
-                (self._bytearray[start + self._byteorder[3]] & DOTSTAR_LED_BRIGHTNESS)
-                / 31.0
+                (buffer[start + self._byteorder[3]] & DOTSTAR_LED_BRIGHTNESS) / 31.0
             )
         return value
 
     def __getitem__(self, index):
         if isinstance(index, slice):
             out = []
-            for in_i in range(*index.indices(len(self._bytearray) // self.bpp)):
+            for in_i in range(
+                *index.indices(len(self._post_brightness_buffer) // self._bpp)
+            ):
                 out.append(self._getitem(in_i))
             return out
         if index < 0:
@@ -307,6 +332,9 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         if index >= self._pixels or index < 0:
             raise IndexError
         return self._getitem(index)
+
+    def _transmit(self, buffer):
+        raise NotImplementedError("Must be subclassed")
 
 
 def wheel(pos):
@@ -327,18 +355,3 @@ def wheel(pos):
         return 0, 255 - pos * 3, pos * 3
     pos -= 170
     return pos * 3, 0, 255 - pos * 3
-
-
-def fill(pixelbuf, color):
-    """
-    Helper to fill the strip a specific color.
-    :param pixelbuf: A pixel object.
-    :param color: Color to set.
-    """
-    auto_write = pixelbuf.auto_write
-    pixelbuf.auto_write = False
-    for i, _ in enumerate(pixelbuf):
-        pixelbuf[i] = color
-    if auto_write:
-        pixelbuf.show()
-    pixelbuf.auto_write = auto_write
