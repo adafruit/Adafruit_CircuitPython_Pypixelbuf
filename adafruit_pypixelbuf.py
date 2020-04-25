@@ -243,6 +243,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
                 r, g, b, w = value
         elif len(value) == 3 and self._dotstar_mode:
             r, g, b = value
+            w = 1.0
 
         if self._bpp == 4 and self._dotstar_mode:
             # LED startframe is three "1" bits, followed by 5 brightness bits
