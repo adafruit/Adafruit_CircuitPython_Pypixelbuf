@@ -227,31 +227,39 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
             g = (value >> 8) & 0xFF
             b = value & 0xFF
             w = 0
-            # If all components are the same and we have a white pixel then use it
-            # instead of the individual components.
-            if self._bpp == 4 and self._has_white and r == g and g == b:
+
+            if self._dotstar_mode:
+                w = 1.0
+        else:
+            if len(value) < 3 or len(value) > 4:
+                raise ValueError(
+                    "Expected tuple of length {}, got {}".format(self._bpp, len(value))
+                )
+            if len(value) == self._bpp:
+                if self._bpp == 3:
+                    r, g, b = value
+                else:
+                    r, g, b, w = value
+            elif len(value) == 3:
+                r, g, b = value
+                if self._dotstar_mode:
+                    w = 1.0
+
+        if self._bpp == 4:
+            if self._dotstar_mode:
+                # LED startframe is three "1" bits, followed by 5 brightness bits
+                # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
+                # vary based on hardware
+                # same as math.ceil(brightness * 31) & 0b00011111
+                # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
+                w = (32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
+            elif self._has_white and r == g and g == b:
+                # If all components are the same and we have a white pixel then use it
+                # instead of the individual components.
                 w = r
                 r = 0
                 g = 0
                 b = 0
-            elif self._dotstar_mode:
-                w = 1.0
-        elif len(value) == self._bpp:
-            if self._bpp == 3:
-                r, g, b = value
-            else:
-                r, g, b, w = value
-        elif len(value) == 3 and self._dotstar_mode:
-            r, g, b = value
-            w = 1.0
-
-        if self._bpp == 4 and self._dotstar_mode:
-            # LED startframe is three "1" bits, followed by 5 brightness bits
-            # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
-            # vary based on hardware
-            # same as math.ceil(brightness * 31) & 0b00011111
-            # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
-            w = (32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
 
         return (r, g, b, w)
 
