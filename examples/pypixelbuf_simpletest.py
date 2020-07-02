@@ -12,7 +12,7 @@ class TestBuf(adafruit_pypixelbuf.PixelBuf):
         self.called = True
 
 
-buf = TestBuf(20, "RGBW", 1.0, auto_write=True)
+buf = TestBuf(20, "RGBW", brightness=0.5, auto_write=True)
 buf[0] = (1, 2, 3)
 buf[1] = (1, 2, 3, 4)
 buf[2] = (2, 2, 2)
