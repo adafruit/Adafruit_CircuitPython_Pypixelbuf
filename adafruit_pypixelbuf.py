@@ -255,9 +255,14 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
                 # same as math.ceil(brightness * 31) & 0b00011111
                 # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
                 w = (32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
-            elif self._has_white and r == g and g == b:
+            elif (
+                self._has_white
+                and (isinstance(value, int) or len(value) == 3)
+                and r == g
+                and g == b
+            ):
                 # If all components are the same and we have a white pixel then use it
-                # instead of the individual components.
+                # instead of the individual components when all 4 values aren't explicitly given.
                 w = r
                 r = 0
                 g = 0
