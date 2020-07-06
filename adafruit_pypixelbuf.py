@@ -61,6 +61,8 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
 
         bpp, byteorder_tuple, has_white, dotstar_mode = self.parse_byteorder(byteorder)
 
+        self.auto_write = False
+
         effective_bpp = 4 if dotstar_mode else bpp
         _bytes = effective_bpp * n
         buf = bytearray(_bytes)
@@ -89,8 +91,6 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         self._dotstar_mode = dotstar_mode
         self._pixel_step = effective_bpp
 
-        self.auto_write = auto_write
-
         if dotstar_mode:
             self._byteorder_tuple = (
                 byteorder_tuple[0] + 1,
@@ -101,6 +101,8 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
 
         self._brightness = 1.0
         self.brightness = brightness
+
+        self.auto_write = auto_write
 
     @staticmethod
     def parse_byteorder(byteorder):
