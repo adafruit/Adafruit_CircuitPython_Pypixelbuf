@@ -98,6 +98,9 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
                 byteorder_tuple[2] + 1,
                 0,
             )
+            # Initialize the buffer with the dotstar start bytes.
+            for i in range(self._offset, self._bytes + self._offset, 4):
+                self._post_brightness_buffer[i] = DOTSTAR_LED_START_FULL_BRIGHT
 
         self._brightness = 1.0
         self.brightness = brightness
