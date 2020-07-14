@@ -252,9 +252,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
                 # LED startframe is three "1" bits, followed by 5 brightness bits
                 # then 8 bits for each of R, G, and B. The order of those 3 are configurable and
                 # vary based on hardware
-                # same as math.ceil(brightness * 31) & 0b00011111
-                # Idea from https://www.codeproject.com/Tips/700780/Fast-floor-ceiling-functions
-                w = (32 - int(32 - w * 31) & 0b00011111) | DOTSTAR_LED_START
+                w = (int(w * 31) & 0b00011111) | DOTSTAR_LED_START
             elif (
                 self._has_white
                 and (isinstance(value, int) or len(value) == 3)
