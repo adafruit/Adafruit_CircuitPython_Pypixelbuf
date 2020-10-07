@@ -134,8 +134,8 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
             r = byteorder.index("R")
             g = byteorder.index("G")
             b = byteorder.index("B")
-        except ValueError:
-            raise ValueError("Invalid Byteorder string")
+        except ValueError as exc:
+            raise ValueError("Invalid Byteorder string") from exc
         if "W" in byteorder:
             w = byteorder.index("W")
             byteorder = (r, g, b, w)
@@ -354,7 +354,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
         raise NotImplementedError("Must be subclassed")
 
 
-def wheel(pos):
+def colorwheel(pos):
     """
     Helper to create a colorwheel.
 
@@ -372,3 +372,7 @@ def wheel(pos):
         return 0, 255 - pos * 3, pos * 3
     pos -= 170
     return pos * 3, 0, 255 - pos * 3
+
+
+# Use of wheel() is deprecated. Please use colorwheel().
+wheel = colorwheel
