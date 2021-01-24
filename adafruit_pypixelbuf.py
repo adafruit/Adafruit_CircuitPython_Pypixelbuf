@@ -11,6 +11,9 @@ in neopixel.py and adafruit_dotstar.py.
 * Author(s): Damien P. George &  Limor Fried & Scott Shawcroft & Roy Hooper
 """
 
+__version__ = "0.0.0-auto.0"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf.git"
+
 DOTSTAR_LED_START_FULL_BRIGHT = 0xFF
 DOTSTAR_LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 DOTSTAR_LED_BRIGHTNESS = 0b00011111
