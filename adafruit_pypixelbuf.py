@@ -289,7 +289,9 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
 
     def __setitem__(self, index, val):
         if isinstance(index, slice):
-            start, stop, step = index.indices(self._pixels)
+            start = index.start if index.start is not None else 0
+            stop = index.stop if index.stop is not None else len(self)
+            step = index.step if index.step is not None else 1
             for val_i, in_i in enumerate(range(start, stop, step)):
                 r, g, b, w = self._parse_color(val[val_i])
                 self._set_item(in_i, r, g, b, w)
