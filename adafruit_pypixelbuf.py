@@ -359,6 +359,12 @@ def colorwheel(pos):
     pos -= 170
     return pos * 3, 0, 255 - pos * 3
 
+# If _pypixelbuf is available, replace the content of this module
+# with the faster implementation from the core
+try:
+    from _pypixelbuf import *
+except ImportError:
+    pass
 
 # Use of wheel() is deprecated. Please use colorwheel().
 wheel = colorwheel
