@@ -69,6 +69,11 @@ This example tests that pypixelbuf works.
     buffer[0] = (1, 2, 3)
 
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/pypixelbuf/en/latest/>`_.
+
 Contributing
 ============
 
