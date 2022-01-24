@@ -2,7 +2,7 @@ Introduction
 ============
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-pypixelbuf/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/pypixelbuf/en/latest/
+    :target: https://docs.circuitpython.org/projects/pypixelbuf/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -72,7 +72,7 @@ This example tests that pypixelbuf works.
 Documentation
 =============
 
-API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/pypixelbuf/en/latest/>`_.
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/pypixelbuf/en/latest/>`_.
 
 Contributing
 ============
