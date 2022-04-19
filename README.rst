@@ -1,3 +1,14 @@
+DEPRECATED - This library has been copied and renamed
+=====================================================
+The new version of this library is https://github.com/adafruit/Adafruit_CircuitPython_Pixelbuf.
+This old version has been archived and will not be maintained. The import name was ``adafruit_pypixelbuf``, and is now:
+
+.. code::
+
+     import adafruit_pixelbuf
+    
+On many boards, there is a native implementation of ``adafruit_pixelbuf``, and this Python version is not needed.
+
 Introduction
 ============
 
